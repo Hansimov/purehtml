@@ -163,7 +163,7 @@ def purify_html_str(html_str, verbose=False):
     return purified_content
 
 
-def batch_purify_html_files(html_paths, verbose=False):
+def purify_html_files(html_paths, verbose=False):
     batch_html_purifier = BatchHTMLPurifier(verbose=verbose)
     html_path_and_purified_content_list = batch_html_purifier.purify_files(html_paths)
     return html_path_and_purified_content_list
@@ -172,7 +172,7 @@ def batch_purify_html_files(html_paths, verbose=False):
 if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
     html_paths = list(html_root.glob("*.html"))
-    html_path_and_purified_content_list = batch_purify_html_files(html_paths)
+    html_path_and_purified_content_list = purify_html_files(html_paths)
     for item in html_path_and_purified_content_list:
         html_path = item["html_path"]
         purified_content = item["purified_content"]

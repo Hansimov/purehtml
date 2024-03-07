@@ -1,5 +1,5 @@
 [project]
-name = "pure-html"
+name = "purehtml"
 version = "0.2"
 authors = [
     { name="Hansimov" },
