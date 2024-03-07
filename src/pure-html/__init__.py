@@ -1,1 +1,1 @@
-from pure_html import HTMLPurifier, BatchHTMLPurifier, purify_html, batch_purify_html
+from pure_html import purify_html_str, purify_html_file, batch_purify_html_files

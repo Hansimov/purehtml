@@ -2,7 +2,6 @@ import concurrent.futures
 import re
 
 from pathlib import Path
-from pprint import pprint
 
 from bs4 import BeautifulSoup
 from markdownify import markdownify
@@ -13,8 +12,8 @@ from tclogger import logger
 
 
 class HTMLPurifier:
-    def __init__(self):
-        pass
+    def __init__(self, verbose=False):
+        self.verbose = verbose
 
     def html_to_markdown(self, html_str):
         markdown_str = markdownify(
@@ -62,35 +61,48 @@ class HTMLPurifier:
                 element.decompose()
                 removed_element_counts += 1
 
-        logger.mesg(
-            f"  - Elements: "
-            f'{colored(len(soup.find_all()),"light_green")} (Remained) / {colored(removed_element_counts,"light_red")} (Removed)'
-        )
+        if self.verbose:
+            logger.mesg(
+                f"  - Elements: "
+                f'{colored(len(soup.find_all()),"light_green")} (Remained) / {colored(removed_element_counts,"light_red")} (Removed)'
+            )
 
         html_str = str(soup)
         self.html_str = html_str
 
         return self.html_str
 
-    def purify(self, html_path, filter_elements=True):
-        logger.note(f"> Purifying content in: {html_path}")
+    def read_html_file(self, html_path):
+        if self.verbose:
+            logger.note(f"> Purifying content in: {html_path}")
 
         if not Path(html_path).exists():
-            logger.warn(f"File not found: {html_path}")
-            return ""
+            warn_msg = f"File not found: {html_path}"
+            logger.warn(warn_msg)
+            raise FileNotFoundError(warn_msg)
 
         encodings = ["utf-8", "latin-1"]
         for encoding in encodings:
             try:
                 with open(html_path, "r", encoding=encoding, errors="ignore") as rf:
                     html_str = rf.read()
-                break
+                    return html_str
             except UnicodeDecodeError:
                 pass
         else:
-            logger.warn(f"No matching encodings: {html_path}")
-            return ""
+            warn_msg = f"No matching encodings: {html_path}"
+            logger.warn(warn_msg)
+            raise UnicodeDecodeError(warn_msg)
 
+    def purify_file(self, html_path, filter_elements=True):
+        html_str = self.read_html_file(html_path)
+        if not html_str:
+            return None
+        else:
+            markdown_str = self.purify_str(html_str, filter_elements=filter_elements)
+        return markdown_str
+
+    def purify_str(self, html_str, filter_elements=True):
         if filter_elements:
             html_str = self.filter_elements_from_html(html_str)
 
@@ -100,32 +112,34 @@ class HTMLPurifier:
             markdown_str = re.sub(ignore_word, "", markdown_str, flags=re.IGNORECASE)
 
         markdown_str = markdown_str.strip()
-
         return markdown_str
 
 
 class BatchHTMLPurifier:
-    def __init__(self) -> None:
+    def __init__(self, verbose=False):
         self.html_path_and_purified_content_list = []
         self.done_count = 0
+        self.verbose = verbose
 
-    def purify_single_html(self, html_path):
+    def purify_single_html_file(self, html_path):
         purifier = HTMLPurifier()
-        purified_content = purifier.purify(html_path)
+        purified_content = purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
             {"html_path": html_path, "purified_content": purified_content}
         )
         self.done_count += 1
-        logger.success(
-            f"> [{self.done_count}/{self.total_count}] Extracted: {html_path}"
-        )
 
-    def purify(self, html_paths):
+        if self.verbose:
+            logger.success(
+                f"> [{self.done_count}/{self.total_count}] purified of [{html_path}]"
+            )
+
+    def purify_files(self, html_paths):
         self.html_path = html_paths
         self.total_count = len(self.html_path)
         with concurrent.futures.ThreadPoolExecutor() as executor:
             futures = [
-                executor.submit(self.purify_single_html, html_path)
+                executor.submit(self.purify_single_html_file, html_path)
                 for html_path in self.html_path
             ]
             for idx, future in enumerate(concurrent.futures.as_completed(futures)):
@@ -134,22 +148,28 @@ class BatchHTMLPurifier:
         return self.html_path_and_purified_content_list
 
 
-def purify_html(html_path):
-    purifier = HTMLPurifier()
-    purified_content = purifier.purify(html_path)
+def purify_html_file(html_path, verbose=False):
+    purifier = HTMLPurifier(verbose=verbose)
+    purified_content = purifier.purify_file(html_path)
     return purified_content
 
 
-def batch_purify_html(html_paths):
-    batch_html_purifier = BatchHTMLPurifier()
-    html_path_and_purified_content_list = batch_html_purifier.purify(html_paths)
+def purify_html_str(html_str, verbose=False):
+    purifier = HTMLPurifier(verbose=verbose)
+    purified_content = purifier.purify_str(html_str)
+    return purified_content
+
+
+def batch_purify_html_files(html_paths, verbose=False):
+    batch_html_purifier = BatchHTMLPurifier(verbose=verbose)
+    html_path_and_purified_content_list = batch_html_purifier.purify_files(html_paths)
     return html_path_and_purified_content_list
 
 
 if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
     html_paths = list(html_root.glob("*.html"))
-    html_path_and_purified_content_list = batch_purify_html(html_paths)
+    html_path_and_purified_content_list = batch_purify_html_files(html_paths)
     for item in html_path_and_purified_content_list:
         html_path = item["html_path"]
         purified_content = item["purified_content"]
