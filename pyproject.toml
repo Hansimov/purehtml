@@ -1,10 +1,10 @@
 [project]
 name = "pure-html"
-version = "0.0.1"
+version = "0.1"
 authors = [
     { name="Hansimov" },
 ]
-description = "Make HTML pure by removing annoying tags and classes for better processing and reading"
+description = "Purify HTML by filtering tags and classes"
 readme = "README.md"
 requires-python = ">=3.6"
 classifiers = [
@@ -12,6 +12,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
+dependencies = [ "tclogger", "beautifulsoup4", "markdownify" ]
 
 [project.urls]
 Homepage = "https://github.com/Hansimov/pure-html"
