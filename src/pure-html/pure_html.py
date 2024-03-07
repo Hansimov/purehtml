@@ -103,6 +103,9 @@ class HTMLPurifier:
         return markdown_str
 
     def purify_str(self, html_str, filter_elements=True):
+        if not html_str:
+            return ""
+
         if filter_elements:
             html_str = self.filter_elements_from_html(html_str)
 
