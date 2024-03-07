@@ -1,6 +1,6 @@
 [project]
 name = "purehtml"
-version = "0.2"
+version = "0.2.1"
 authors = [
     { name="Hansimov" },
 ]

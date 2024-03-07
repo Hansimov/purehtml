@@ -7,7 +7,7 @@ from bs4 import BeautifulSoup
 from markdownify import markdownify
 from termcolor import colored
 
-from constants import IGNORE_TAGS, IGNORE_CLASSES, IGNORE_WORDS
+from .constants import IGNORE_TAGS, IGNORE_CLASSES, IGNORE_WORDS
 from tclogger import logger
 
 
