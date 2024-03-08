@@ -5,15 +5,16 @@ from pathlib import Path
 
 from bs4 import BeautifulSoup
 from markdownify import markdownify
+from tclogger import logger
 from termcolor import colored
 
-from .constants import IGNORE_TAGS, IGNORE_CLASSES, IGNORE_WORDS
-from tclogger import logger
+from constants import IGNORE_TAGS, IGNORE_CLASSES, IGNORE_WORDS
 
 
 class HTMLPurifier:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, output_format="markdown"):
         self.verbose = verbose
+        self.output_format = output_format
 
     def html_to_markdown(self, html_str):
         markdown_str = markdownify(
@@ -61,20 +62,15 @@ class HTMLPurifier:
                 element.decompose()
                 removed_element_counts += 1
 
-        if self.verbose:
-            logger.mesg(
-                f"  - Elements: "
-                f'{colored(len(soup.find_all()),"light_green")} (Remained) / {colored(removed_element_counts,"light_red")} (Removed)'
-            )
+        logger.mesg(
+            f"  - Elements: "
+            f'{colored(len(soup.find_all()),"light_green")} (Remained) / {colored(removed_element_counts,"light_red")} (Removed)'
+        )
 
-        html_str = str(soup)
-        self.html_str = html_str
-
-        return self.html_str
+        return str(soup)
 
     def read_html_file(self, html_path):
-        if self.verbose:
-            logger.note(f"> Purifying content in: {html_path}")
+        logger.note(f"> Purifying content in: {html_path}")
 
         if not Path(html_path).exists():
             warn_msg = f"File not found: {html_path}"
@@ -95,40 +91,50 @@ class HTMLPurifier:
             raise UnicodeDecodeError(warn_msg)
 
     def purify_file(self, html_path, filter_elements=True):
+        logger.enter_quiet(not self.verbose)
         html_str = self.read_html_file(html_path)
         if not html_str:
-            return None
+            return ""
         else:
-            markdown_str = self.purify_str(html_str, filter_elements=filter_elements)
-        return markdown_str
+            result = self.purify_str(html_str, filter_elements=filter_elements)
+        logger.exit_quiet(not self.verbose)
+        return result
 
     def purify_str(self, html_str, filter_elements=True):
+        logger.enter_quiet(not self.verbose)
         if not html_str:
             return ""
 
         if filter_elements:
             html_str = self.filter_elements_from_html(html_str)
 
-        markdown_str = self.html_to_markdown(html_str)
+        if self.output_format == "markdown":
+            markdown_str = self.html_to_markdown(html_str)
 
-        for ignore_word in IGNORE_WORDS:
-            markdown_str = re.sub(ignore_word, "", markdown_str, flags=re.IGNORECASE)
+            for ignore_word in IGNORE_WORDS:
+                markdown_str = re.sub(
+                    ignore_word, "", markdown_str, flags=re.IGNORECASE
+                )
+            result = markdown_str.strip()
+        else:
+            result = html_str.strip()
 
-        markdown_str = markdown_str.strip()
-        return markdown_str
+        logger.exit_quiet(not self.verbose)
+        return result
 
 
 class BatchHTMLPurifier:
-    def __init__(self, verbose=False):
+    def __init__(self, verbose=False, output_format="markdown"):
         self.html_path_and_purified_content_list = []
         self.done_count = 0
         self.verbose = verbose
+        self.output_format = output_format
 
     def purify_single_html_file(self, html_path):
-        purifier = HTMLPurifier()
+        purifier = HTMLPurifier(verbose=self.verbose, output_format=self.output_format)
         purified_content = purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
-            {"html_path": html_path, "purified_content": purified_content}
+            {"path": html_path, "str": purified_content, "format": self.output_format}
         )
         self.done_count += 1
 
@@ -151,30 +157,29 @@ class BatchHTMLPurifier:
         return self.html_path_and_purified_content_list
 
 
-def purify_html_file(html_path, verbose=False):
-    purifier = HTMLPurifier(verbose=verbose)
-    purified_content = purifier.purify_file(html_path)
-    return purified_content
+def purify_html_file(html_path, verbose=False, output_format="markdown"):
+    purifier = HTMLPurifier(verbose=verbose, output_format=output_format)
+    return purifier.purify_file(html_path)
 
 
-def purify_html_str(html_str, verbose=False):
-    purifier = HTMLPurifier(verbose=verbose)
-    purified_content = purifier.purify_str(html_str)
-    return purified_content
+def purify_html_str(html_str, verbose=False, output_format="markdown"):
+    purifier = HTMLPurifier(verbose=verbose, output_format=output_format)
+    return purifier.purify_str(html_str)
 
 
-def purify_html_files(html_paths, verbose=False):
-    batch_html_purifier = BatchHTMLPurifier(verbose=verbose)
-    html_path_and_purified_content_list = batch_html_purifier.purify_files(html_paths)
-    return html_path_and_purified_content_list
+def purify_html_files(html_paths, verbose=False, output_format="markdown"):
+    batch_purifier = BatchHTMLPurifier(verbose=verbose, output_format=output_format)
+    return batch_purifier.purify_files(html_paths)
 
 
 if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
     html_paths = list(html_root.glob("*.html"))
-    html_path_and_purified_content_list = purify_html_files(html_paths)
+    html_path_and_purified_content_list = purify_html_files(
+        html_paths, output_format="html"
+    )
     for item in html_path_and_purified_content_list:
-        html_path = item["html_path"]
-        purified_content = item["purified_content"]
+        html_path = item["path"]
+        purified_content = item["str"]
         logger.file(html_path)
         logger.line(purified_content)
