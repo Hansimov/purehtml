@@ -68,27 +68,25 @@ class HTMLPurifier:
             )
             is_element_in_remove_tags = element.name in REMOVE_TAGS
 
-            # check if this element has no text
-            is_no_text = (
-                not element.get_text().strip()
-                # exclude img
-                # and not element.find_all("img")
-                # and not element.name == "img"
-            )
-
-            if is_element_in_remove_tags or is_class_in_remove_classes or is_no_text:
+            if is_element_in_remove_tags or is_class_in_remove_classes:
                 element.extract()
                 removed_element_count += 1
 
-        # Unwrap tags by env and format
+        # Unwrap tags by env and format, and remove empty elements
         if self.keep_format:
             KEEP_TAGS = [*KEEP_ENV_TAGS, *KEEP_FORMAT_TAGS]
         else:
             KEEP_TAGS = KEEP_ENV_TAGS
+
         for element in soup.find_all():
             if element.name not in KEEP_TAGS:
                 element.unwrap()
                 unwrapped_element_count += 1
+            elif not element.get_text().strip():
+                element.extract()
+                removed_element_count += 1
+            else:
+                pass
 
         logger.mesg(
             f"  - Elements: "
@@ -153,7 +151,7 @@ class HTMLPurifier:
                 else:
                     output_path = Path(html_path.with_suffix(f".{self.output_format}"))
             output_path.parent.mkdir(parents=True, exist_ok=True)
-            with open(output_path, "w") as wf:
+            with open(output_path, "w", encoding="utf-8") as wf:
                 wf.write(result)
             logger.success(f"  > Saved to: {output_path}")
         logger.exit_quiet(not self.verbose)
