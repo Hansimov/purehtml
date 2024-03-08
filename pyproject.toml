@@ -1,6 +1,10 @@
+[build-system]
+requires = ["setuptools >= 61.0"]
+build-backend = "setuptools.build_meta"
+
 [project]
 name = "purehtml"
-version = "0.4.2"
+version = "0.4.3"
 authors = [
     { name="Hansimov" },
 ]
@@ -17,3 +21,6 @@ dependencies = [ "tclogger", "beautifulsoup4", "markdownify" ]
 [project.urls]
 Homepage = "https://github.com/Hansimov/pure-html"
 Issues = "https://github.com/Hansimov/pure-html/issues"
+
+[tool.setuptools.packages.find]
+exclude = [".github/", "src/purehtml/samples/"]
