@@ -2,6 +2,7 @@ import concurrent.futures
 import re
 
 from pathlib import Path
+from typing import Union, Literal
 
 from bs4 import BeautifulSoup, Comment
 from markdownify import markdownify
@@ -223,12 +224,12 @@ class BatchHTMLPurifier:
 
 
 def purify_html_file(
-    html_path,
-    verbose=False,
-    output_format="html",
-    keep_href=False,
-    keep_format_tags=False,
-    keep_group_tags=True,
+    html_path: Union[Path, str],
+    verbose: bool = False,
+    output_format: Literal["markdown", "html"] = "html",
+    keep_href: bool = False,
+    keep_format_tags: bool = False,
+    keep_group_tags: bool = True,
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -241,12 +242,12 @@ def purify_html_file(
 
 
 def purify_html_str(
-    html_str,
-    verbose=False,
-    output_format="html",
-    keep_href=False,
-    keep_format_tags=False,
-    keep_group_tags=True,
+    html_str: str,
+    verbose: bool = False,
+    output_format: Literal["markdown", "html"] = "html",
+    keep_href: bool = False,
+    keep_format_tags: bool = False,
+    keep_group_tags: bool = True,
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -259,12 +260,12 @@ def purify_html_str(
 
 
 def purify_html_files(
-    html_paths,
-    verbose=False,
-    output_format="html",
-    keep_href=False,
-    keep_format_tags=False,
-    keep_group_tags=True,
+    html_paths: list[Union[Path, str]],
+    verbose: bool = False,
+    output_format: Literal["markdown", "html"] = "html",
+    keep_href: bool = False,
+    keep_format_tags: bool = False,
+    keep_group_tags: bool = True,
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
