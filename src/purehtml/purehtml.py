@@ -10,10 +10,10 @@ from termcolor import colored
 
 try:
     # Run from script
-    from constants import IGNORE_TAGS, IGNORE_CLASSES
+    from constants import REMOVE_TAGS, REMOVE_CLASSES
 except:
     # Run from package
-    from .constants import IGNORE_TAGS, IGNORE_CLASSES
+    from .constants import REMOVE_TAGS, REMOVE_CLASSES
 
 
 class HTMLPurifier:
@@ -38,7 +38,7 @@ class HTMLPurifier:
         for comment in comments:
             comment.extract()
 
-        # Remove elements containing patterns to ignore
+        # Remove elements with patterns of classes and ids
         removed_element_counts = 0
         for element in soup.find_all():
             try:
@@ -54,11 +54,11 @@ class HTMLPurifier:
 
             class_id_str = f"{class_str} {id_str}"
 
-            is_class_in_ignore_classes = any(
-                re.search(ignore_class, class_id_str, flags=re.IGNORECASE)
-                for ignore_class in IGNORE_CLASSES
+            is_class_in_remove_classes = any(
+                re.search(remove_class, class_id_str, flags=re.IGNORECASE)
+                for remove_class in REMOVE_CLASSES
             )
-            is_element_in_ignore_tags = element.name in IGNORE_TAGS
+            is_element_in_remove_tags = element.name in REMOVE_TAGS
 
             # check if this element has no text
             is_no_text = (
@@ -68,7 +68,7 @@ class HTMLPurifier:
                 # and not element.name == "img"
             )
 
-            if is_element_in_ignore_tags or is_class_in_ignore_classes or is_no_text:
+            if is_element_in_remove_tags or is_class_in_remove_classes or is_no_text:
                 element.extract()
                 removed_element_counts += 1
 
