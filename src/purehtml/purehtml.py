@@ -10,17 +10,24 @@ from termcolor import colored
 
 try:
     # Run from script
-    from constants import REMOVE_TAGS, REMOVE_CLASSES
+    from constants import REMOVE_TAGS, REMOVE_CLASSES, KEEP_ENV_TAGS, KEEP_FORMAT_TAGS
 except:
     # Run from package
-    from .constants import REMOVE_TAGS, REMOVE_CLASSES
+    from .constants import REMOVE_TAGS, REMOVE_CLASSES, KEEP_ENV_TAGS, KEEP_FORMAT_TAGS
 
 
 class HTMLPurifier:
-    def __init__(self, verbose=False, output_format="markdown", keep_href=False):
+    def __init__(
+        self,
+        verbose=False,
+        output_format="markdown",
+        keep_href=False,
+        keep_format=False,
+    ):
         self.verbose = verbose
         self.output_format = output_format
         self.keep_href = keep_href
+        self.keep_format = keep_format
 
     def html_to_markdown(self, html_str):
         markdown_str = markdownify(
@@ -39,7 +46,8 @@ class HTMLPurifier:
             comment.extract()
 
         # Remove elements with patterns of classes and ids
-        removed_element_counts = 0
+        removed_element_count = 0
+        unwrapped_element_count = 0
         for element in soup.find_all():
             try:
                 class_attr = element.get("class", [])
@@ -70,12 +78,23 @@ class HTMLPurifier:
 
             if is_element_in_remove_tags or is_class_in_remove_classes or is_no_text:
                 element.extract()
-                removed_element_counts += 1
+                removed_element_count += 1
+
+        # Unwrap tags by env and format
+        if self.keep_format:
+            KEEP_TAGS = [*KEEP_ENV_TAGS, *KEEP_FORMAT_TAGS]
+        else:
+            KEEP_TAGS = KEEP_ENV_TAGS
+        for element in soup.find_all():
+            if element.name not in KEEP_TAGS:
+                element.unwrap()
+                unwrapped_element_count += 1
 
         logger.mesg(
             f"  - Elements: "
             f'{colored(len(soup.find_all()),"light_green")} (Remained) '
-            f'/ {colored(removed_element_counts,"light_red")} (Removed)'
+            f'/ {colored(removed_element_count,"light_red")} (Removed)'
+            f'/ {colored(unwrapped_element_count,"light_yellow")} (Unwrapped)'
         )
 
         return str(soup)
@@ -160,18 +179,26 @@ class HTMLPurifier:
 
 
 class BatchHTMLPurifier:
-    def __init__(self, verbose=False, output_format="markdown", keep_href=False):
+    def __init__(
+        self,
+        verbose=False,
+        output_format="markdown",
+        keep_href=False,
+        keep_format=False,
+    ):
         self.html_path_and_purified_content_list = []
         self.done_count = 0
         self.verbose = verbose
         self.output_format = output_format
         self.keep_href = keep_href
+        self.keep_format = keep_format
 
     def purify_single_html_file(self, html_path):
         purifier = HTMLPurifier(
             verbose=self.verbose,
             output_format=self.output_format,
             keep_href=self.keep_href,
+            keep_format=self.keep_format,
         )
         result = purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
@@ -203,23 +230,38 @@ class BatchHTMLPurifier:
         return self.html_path_and_purified_content_list
 
 
-def purify_html_file(html_path, verbose=False, output_format="html", keep_href=False):
+def purify_html_file(
+    html_path, verbose=False, output_format="html", keep_href=False, keep_format=False
+):
     purifier = HTMLPurifier(
-        verbose=verbose, output_format=output_format, keep_href=keep_href
+        verbose=verbose,
+        output_format=output_format,
+        keep_href=keep_href,
+        keep_format=keep_format,
     )
     return purifier.purify_file(html_path)
 
 
-def purify_html_str(html_str, verbose=False, output_format="html", keep_href=False):
+def purify_html_str(
+    html_str, verbose=False, output_format="html", keep_href=False, keep_format=False
+):
     purifier = HTMLPurifier(
-        verbose=verbose, output_format=output_format, keep_href=keep_href
+        verbose=verbose,
+        output_format=output_format,
+        keep_href=keep_href,
+        keep_format=keep_format,
     )
     return purifier.purify_str(html_str)
 
 
-def purify_html_files(html_paths, verbose=False, output_format="html", keep_href=False):
+def purify_html_files(
+    html_paths, verbose=False, output_format="html", keep_href=False, keep_format=False
+):
     batch_purifier = BatchHTMLPurifier(
-        verbose=verbose, output_format=output_format, keep_href=keep_href
+        verbose=verbose,
+        output_format=output_format,
+        keep_href=keep_href,
+        keep_format=keep_format,
     )
     return batch_purifier.purify_files(html_paths)
 
@@ -228,7 +270,11 @@ if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
     html_paths = list(html_root.glob("*.html"))
     html_path_and_purified_content_list = purify_html_files(
-        html_paths, verbose=False, output_format="html", keep_href=False
+        html_paths,
+        verbose=False,
+        output_format="html",
+        keep_href=False,
+        keep_format=True,
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
