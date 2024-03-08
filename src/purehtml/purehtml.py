@@ -28,14 +28,14 @@ class HTMLPurifier:
         verbose=False,
         output_format="markdown",
         keep_href=False,
-        keep_format=False,
-        keep_group=True,
+        keep_format_tags=False,
+        keep_group_tags=True,
     ):
         self.verbose = verbose
         self.output_format = output_format
         self.keep_href = keep_href
-        self.keep_format = keep_format
-        self.keep_group = keep_group
+        self.keep_format_tags = keep_format_tags
+        self.keep_group_tags = keep_group_tags
 
     def html_to_markdown(self, html_str):
         markdown_str = markdownify(
@@ -82,9 +82,9 @@ class HTMLPurifier:
 
         # Unwrap tags by [env, group, format], and remove empty elements
         KEEP_TAGS = ENV_TAGS
-        if self.keep_group:
+        if self.keep_group_tags:
             KEEP_TAGS.extend(GROUP_TAGS)
-        if self.keep_format:
+        if self.keep_format_tags:
             KEEP_TAGS.extend(FORMAT_TAGS)
 
         for element in soup.find_all():
@@ -191,24 +191,24 @@ class BatchHTMLPurifier:
         verbose=False,
         output_format="markdown",
         keep_href=False,
-        keep_format=False,
-        keep_group=True,
+        keep_format_tags=False,
+        keep_group_tags=True,
     ):
         self.html_path_and_purified_content_list = []
         self.done_count = 0
         self.verbose = verbose
         self.output_format = output_format
         self.keep_href = keep_href
-        self.keep_format = keep_format
-        self.keep_group = keep_group
+        self.keep_format_tags = keep_format_tags
+        self.keep_group_tags = keep_group_tags
 
     def purify_single_html_file(self, html_path):
         purifier = HTMLPurifier(
             verbose=self.verbose,
             output_format=self.output_format,
             keep_href=self.keep_href,
-            keep_format=self.keep_format,
-            keep_group=self.keep_group,
+            keep_format_tags=self.keep_format_tags,
+            keep_group_tags=self.keep_group_tags,
         )
         result = purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
@@ -245,15 +245,15 @@ def purify_html_file(
     verbose=False,
     output_format="html",
     keep_href=False,
-    keep_format=False,
-    keep_group=True,
+    keep_format_tags=False,
+    keep_group_tags=True,
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
         output_format=output_format,
         keep_href=keep_href,
-        keep_format=keep_format,
-        keep_group=keep_group,
+        keep_format_tags=keep_format_tags,
+        keep_group_tags=keep_group_tags,
     )
     return purifier.purify_file(html_path)
 
@@ -263,15 +263,15 @@ def purify_html_str(
     verbose=False,
     output_format="html",
     keep_href=False,
-    keep_format=False,
-    keep_group=True,
+    keep_format_tags=False,
+    keep_group_tags=True,
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
         output_format=output_format,
         keep_href=keep_href,
-        keep_format=keep_format,
-        keep_group=keep_group,
+        keep_format_tags=keep_format_tags,
+        keep_group_tags=keep_group_tags,
     )
     return purifier.purify_str(html_str)
 
@@ -281,15 +281,15 @@ def purify_html_files(
     verbose=False,
     output_format="html",
     keep_href=False,
-    keep_format=False,
-    keep_group=True,
+    keep_format_tags=False,
+    keep_group_tags=True,
 ):
     batch_purifier = BatchHTMLPurifier(
         verbose=verbose,
         output_format=output_format,
         keep_href=keep_href,
-        keep_format=keep_format,
-        keep_group=keep_group,
+        keep_format_tags=keep_format_tags,
+        keep_group_tags=keep_group_tags,
     )
     return batch_purifier.purify_files(html_paths)
 
@@ -302,8 +302,8 @@ if __name__ == "__main__":
         verbose=False,
         output_format="html",
         keep_href=False,
-        keep_format=True,
-        keep_group=True,
+        keep_format_tags=True,
+        keep_group_tags=True,
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
