@@ -1,4 +1,4 @@
-COMMON_IGNORE_TAGS = ["script", "style", "button"]
+COMMON_IGNORE_TAGS = ["script", "style", "button", "link"]
 
 COMMON_IGNORE_CLASSES = [
     "sidebar",

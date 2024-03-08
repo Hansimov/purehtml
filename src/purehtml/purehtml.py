@@ -27,10 +27,12 @@ class HTMLPurifier:
     def filter_elements(self, html_str):
         soup = BeautifulSoup(html_str, "html.parser")
 
-        comments = soup.find_all(text=lambda text: isinstance(text, Comment))
+        # Remove comments
+        comments = soup.find_all(string=lambda text: isinstance(text, Comment))
         for comment in comments:
             comment.extract()
 
+        # Remove elements containing patterns to ignore
         removed_element_counts = 0
         for element in soup.find_all():
             try:
@@ -50,18 +52,24 @@ class HTMLPurifier:
                 re.search(ignore_class, class_id_str, flags=re.IGNORECASE)
                 for ignore_class in IGNORE_CLASSES
             )
+            is_element_in_ignore_tags = element.name in IGNORE_TAGS
 
-            if (
-                (element.name not in ["img"] and not element.text.strip())
-                or (element.name in IGNORE_TAGS)
-                or is_class_in_ignore_classes
-            ):
-                element.decompose()
+            # check if this element has no text
+            is_no_text = (
+                not element.get_text().strip()
+                # exclude img
+                # and not element.find_all("img")
+                # and not element.name == "img"
+            )
+
+            if is_element_in_ignore_tags or is_class_in_ignore_classes or is_no_text:
+                element.extract()
                 removed_element_counts += 1
 
         logger.mesg(
             f"  - Elements: "
-            f'{colored(len(soup.find_all()),"light_green")} (Remained) / {colored(removed_element_counts,"light_red")} (Removed)'
+            f'{colored(len(soup.find_all()),"light_green")} (Remained) '
+            f'/ {colored(removed_element_counts,"light_red")} (Removed)'
         )
 
         return str(soup)
@@ -111,9 +119,11 @@ class HTMLPurifier:
                 if self.output_format == "html":
                     output_path = Path(str(html_path) + ".pure")
                 else:
-                    output_path = html_path.with_suffix(f".{self.output_format}")
+                    output_path = Path(html_path.with_suffix(f".{self.output_format}"))
+            output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w") as wf:
                 wf.write(result)
+            logger.success(f"  > Saved to: {output_path}")
         logger.exit_quiet(not self.verbose)
         return {"path": html_path, "output_path": output_path, "output": result}
 
@@ -158,7 +168,7 @@ class BatchHTMLPurifier:
 
         if self.verbose:
             logger.success(
-                f"> [{self.done_count}/{self.total_count}] purified of [{html_path}]"
+                f"> Purified [{self.done_count}/{self.total_count}]: [{html_path}]"
             )
 
     def purify_files(self, html_paths):
@@ -194,12 +204,12 @@ if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
     html_paths = list(html_root.glob("*.html"))
     html_path_and_purified_content_list = purify_html_files(
-        html_paths, output_format="html"
+        html_paths, verbose=False, output_format="html"
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
         purified_content = item["output"]
         output_path = item["output_path"]
-        logger.line(purified_content)
-        logger.file(html_path)
-        logger.file(output_path)
+        # logger.line(purified_content)
+        # logger.file(html_path)
+        logger.file(output_path.name)
