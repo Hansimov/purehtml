@@ -3,7 +3,7 @@ import re
 
 from pathlib import Path
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Comment
 from markdownify import markdownify
 from tclogger import logger
 from termcolor import colored
@@ -24,8 +24,13 @@ class HTMLPurifier:
 
         return self.markdown_str
 
-    def filter_elements_from_html(self, html_str):
+    def filter_elements(self, html_str):
         soup = BeautifulSoup(html_str, "html.parser")
+
+        comments = soup.find_all(text=lambda text: isinstance(text, Comment))
+        for comment in comments:
+            comment.extract()
+
         removed_element_counts = 0
         for element in soup.find_all():
             class_str = ""
@@ -69,6 +74,18 @@ class HTMLPurifier:
 
         return str(soup)
 
+    def filter_attrs(self, html_str):
+        soup = BeautifulSoup(html_str, "html.parser")
+        for element in soup.find_all():
+            if element.name == "a":
+                element.attrs = {"href": element.get("href")}
+            elif element.name == "img":
+                element.attrs = {"src": element.get("src"), "alt": element.get("alt")}
+            else:
+                element.attrs = {}
+
+        return str(soup)
+
     def read_html_file(self, html_path):
         logger.note(f"> Purifying content in: {html_path}")
 
@@ -106,7 +123,7 @@ class HTMLPurifier:
             return ""
 
         if filter_elements:
-            html_str = self.filter_elements_from_html(html_str)
+            html_str = self.filter_elements(html_str)
 
         if self.output_format == "markdown":
             markdown_str = self.html_to_markdown(html_str)
@@ -117,6 +134,7 @@ class HTMLPurifier:
                 )
             result = markdown_str.strip()
         else:
+            html_str = self.filter_attrs(html_str)
             result = html_str.strip()
 
         logger.exit_quiet(not self.verbose)
