@@ -8,7 +8,12 @@ from markdownify import markdownify
 from tclogger import logger
 from termcolor import colored
 
-from constants import IGNORE_TAGS, IGNORE_CLASSES
+try:
+    # Run from script
+    from constants import IGNORE_TAGS, IGNORE_CLASSES
+except:
+    # Run from package
+    from .constants import IGNORE_TAGS, IGNORE_CLASSES
 
 
 class HTMLPurifier:
@@ -198,25 +203,21 @@ class BatchHTMLPurifier:
         return self.html_path_and_purified_content_list
 
 
-def purify_html_file(
-    html_path, verbose=False, output_format="markdown", keep_href=False
-):
+def purify_html_file(html_path, verbose=False, output_format="html", keep_href=False):
     purifier = HTMLPurifier(
         verbose=verbose, output_format=output_format, keep_href=keep_href
     )
     return purifier.purify_file(html_path)
 
 
-def purify_html_str(html_str, verbose=False, output_format="markdown", keep_href=False):
+def purify_html_str(html_str, verbose=False, output_format="html", keep_href=False):
     purifier = HTMLPurifier(
         verbose=verbose, output_format=output_format, keep_href=keep_href
     )
     return purifier.purify_str(html_str)
 
 
-def purify_html_files(
-    html_paths, verbose=False, output_format="markdown", keep_href=False
-):
+def purify_html_files(html_paths, verbose=False, output_format="html", keep_href=False):
     batch_purifier = BatchHTMLPurifier(
         verbose=verbose, output_format=output_format, keep_href=keep_href
     )
