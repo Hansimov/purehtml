@@ -1,18 +1,21 @@
 # remove whole element with these tags
 COMMON_REMOVE_TAGS = ["script", "style", "button", "link"]
 
-# keep env tags (do not unwrap)
+# keep env tags (not unwrap)
 HEADER_TAGS = ["title", "h1", "h2", "h3", "h4", "h5", "h6"]
 LIST_TAGS = ["ul", "ol", "li", "dl", "dt", "dd"]
 TABLE_TAGS = ["table", "tr", "td", "th"]
-PARA_TAGS = ["section", "div", "p", "code", "pre", "blockquote", "details"]
-KEEP_ENV_TAGS = [*HEADER_TAGS, *LIST_TAGS, *TABLE_TAGS, *PARA_TAGS]
+PARA_TAGS = ["p", "code", "pre", "code", "math"]
+ENV_TAGS = [*HEADER_TAGS, *LIST_TAGS, *TABLE_TAGS, *PARA_TAGS]
 
-# keep format tags (do not unwrap)
+# keep group tags (not unwrap)
+GROUP_TAGS = ["section", "div", "details"]
+
+# keep format tags (not unwrap)
 POS_TAGS = ["sub", "sup"]
 FONT_TAGS = ["b", "strong", "em"]
-MARK_TAGS = ["i", "u", "s", "strike", "mark", "ins", "del", "cite"]
-KEEP_FORMAT_TAGS = [*POS_TAGS, *FONT_TAGS, *MARK_TAGS]
+MARK_TAGS = ["a", "i", "u", "s", "strike", "mark", "ins", "del", "cite", "blockquote"]
+FORMAT_TAGS = [*POS_TAGS, *FONT_TAGS, *MARK_TAGS]
 
 COMMON_REMOVE_CLASSES = [
     "(?<!has)sidebar",
