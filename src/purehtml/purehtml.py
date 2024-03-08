@@ -107,15 +107,23 @@ class HTMLPurifier:
             logger.warn(warn_msg)
             raise UnicodeDecodeError(warn_msg)
 
-    def purify_file(self, html_path, filter_elements=True):
+    def purify_file(self, html_path, filter_elements=True, save=True, output_path=None):
         logger.enter_quiet(not self.verbose)
         html_str = self.read_html_file(html_path)
         if not html_str:
-            return ""
+            return {"path": html_path, "output_path": None, "output": ""}
         else:
             result = self.purify_str(html_str, filter_elements=filter_elements)
+        if save:
+            if not output_path:
+                if self.output_format == "html":
+                    output_path = Path(str(html_path) + ".pure")
+                else:
+                    output_path = html_path.with_suffix(f".{self.output_format}")
+            with open(output_path, "w") as wf:
+                wf.write(result)
         logger.exit_quiet(not self.verbose)
-        return result
+        return {"path": html_path, "output_path": output_path, "output": result}
 
     def purify_str(self, html_str, filter_elements=True):
         logger.enter_quiet(not self.verbose)
@@ -150,9 +158,14 @@ class BatchHTMLPurifier:
 
     def purify_single_html_file(self, html_path):
         purifier = HTMLPurifier(verbose=self.verbose, output_format=self.output_format)
-        purified_content = purifier.purify_file(html_path)
+        result = purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
-            {"path": html_path, "str": purified_content, "format": self.output_format}
+            {
+                "path": html_path,
+                "output": result["output"],
+                "output_path": result["output_path"],
+                "format": self.output_format,
+            }
         )
         self.done_count += 1
 
@@ -198,6 +211,8 @@ if __name__ == "__main__":
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
-        purified_content = item["str"]
-        logger.file(html_path)
+        purified_content = item["output"]
+        output_path = item["output_path"]
         logger.line(purified_content)
+        logger.file(html_path)
+        logger.file(output_path)
