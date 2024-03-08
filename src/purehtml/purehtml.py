@@ -186,42 +186,24 @@ class HTMLPurifier:
 
 
 class BatchHTMLPurifier:
-    def __init__(
-        self,
-        verbose=False,
-        output_format="markdown",
-        keep_href=False,
-        keep_format_tags=False,
-        keep_group_tags=True,
-    ):
+    def __init__(self, purifier: HTMLPurifier):
         self.html_path_and_purified_content_list = []
         self.done_count = 0
-        self.verbose = verbose
-        self.output_format = output_format
-        self.keep_href = keep_href
-        self.keep_format_tags = keep_format_tags
-        self.keep_group_tags = keep_group_tags
+        self.purifier = purifier
 
     def purify_single_html_file(self, html_path):
-        purifier = HTMLPurifier(
-            verbose=self.verbose,
-            output_format=self.output_format,
-            keep_href=self.keep_href,
-            keep_format_tags=self.keep_format_tags,
-            keep_group_tags=self.keep_group_tags,
-        )
-        result = purifier.purify_file(html_path)
+        result = self.purifier.purify_file(html_path)
         self.html_path_and_purified_content_list.append(
             {
                 "path": html_path,
                 "output": result["output"],
                 "output_path": result["output_path"],
-                "format": self.output_format,
+                "format": self.purifier.output_format,
             }
         )
         self.done_count += 1
 
-        if self.verbose:
+        if self.purifier.verbose:
             logger.success(
                 f"> Purified [{self.done_count}/{self.total_count}]: [{html_path}]"
             )
@@ -284,13 +266,14 @@ def purify_html_files(
     keep_format_tags=False,
     keep_group_tags=True,
 ):
-    batch_purifier = BatchHTMLPurifier(
+    purifier = HTMLPurifier(
         verbose=verbose,
         output_format=output_format,
         keep_href=keep_href,
         keep_format_tags=keep_format_tags,
         keep_group_tags=keep_group_tags,
     )
+    batch_purifier = BatchHTMLPurifier(purifier=purifier)
     return batch_purifier.purify_files(html_paths)
 
 
