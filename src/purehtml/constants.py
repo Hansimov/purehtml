@@ -18,7 +18,7 @@ WIKIPEDIA_IGNORE_TAGS = [
     "nav",
 ]
 WIKIPEDIA_IGNORE_CLASSES = [
-    "mw-jump-link",
+    "(mw-)((jump-link)|(editsection))",
     "language-list",
     "p-lang-btn",
     "(vector-)((header)|(column)|(sticky-pinned)|(dropdown-content)|(page-toolbar)|(body-before-content))",
@@ -26,9 +26,6 @@ WIKIPEDIA_IGNORE_CLASSES = [
     "catlinks",
 ]
 
-WIKIPEDIA_IGNORE_WORDS = [
-    "\[edit\]",
-]
 
 IGNORE_TAGS = [*COMMON_IGNORE_TAGS, *WIKIPEDIA_IGNORE_TAGS]
 IGNORE_CLASSES = [
@@ -36,4 +33,3 @@ IGNORE_CLASSES = [
     *COM_163_IGNORE_CLASSES,
     *WIKIPEDIA_IGNORE_CLASSES,
 ]
-IGNORE_WORDS = [*WIKIPEDIA_IGNORE_WORDS]

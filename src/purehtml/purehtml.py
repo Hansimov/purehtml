@@ -8,7 +8,7 @@ from markdownify import markdownify
 from tclogger import logger
 from termcolor import colored
 
-from constants import IGNORE_TAGS, IGNORE_CLASSES, IGNORE_WORDS
+from constants import IGNORE_TAGS, IGNORE_CLASSES
 
 
 class HTMLPurifier:
@@ -33,36 +33,28 @@ class HTMLPurifier:
 
         removed_element_counts = 0
         for element in soup.find_all():
-            class_str = ""
-            id_str = ""
             try:
                 class_attr = element.get("class", [])
-                if class_attr:
-                    class_str = " ".join(list(class_attr))
-                if id_str:
-                    class_str = f"{class_str} {id_str}"
+                class_str = " ".join(list(class_attr))
             except:
-                pass
+                class_str = ""
 
             try:
                 id_str = element.get("id", "")
             except:
-                pass
+                id_str = ""
+
+            class_id_str = f"{class_str} {id_str}"
 
             is_class_in_ignore_classes = any(
-                re.search(ignore_class, class_str, flags=re.IGNORECASE)
-                for ignore_class in IGNORE_CLASSES
-            )
-            is_id_in_ignore_classes = any(
-                re.search(ignore_class, id_str, flags=re.IGNORECASE)
+                re.search(ignore_class, class_id_str, flags=re.IGNORECASE)
                 for ignore_class in IGNORE_CLASSES
             )
 
             if (
-                (not element.text.strip())
+                (element.name not in ["img"] and not element.text.strip())
                 or (element.name in IGNORE_TAGS)
                 or is_class_in_ignore_classes
-                or is_id_in_ignore_classes
             ):
                 element.decompose()
                 removed_element_counts += 1
@@ -135,11 +127,6 @@ class HTMLPurifier:
 
         if self.output_format == "markdown":
             markdown_str = self.html_to_markdown(html_str)
-
-            for ignore_word in IGNORE_WORDS:
-                markdown_str = re.sub(
-                    ignore_word, "", markdown_str, flags=re.IGNORECASE
-                )
             result = markdown_str.strip()
         else:
             html_str = self.filter_attrs(html_str)
