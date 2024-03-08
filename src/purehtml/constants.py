@@ -15,7 +15,7 @@ MARK_TAGS = ["i", "u", "s", "strike", "mark", "ins", "del", "cite"]
 KEEP_FORMAT_TAGS = [*POS_TAGS, *FONT_TAGS, *MARK_TAGS]
 
 COMMON_REMOVE_CLASSES = [
-    "sidebar",
+    "(?<!has)sidebar",
     "footer",
     "related",
     "comment",
@@ -24,7 +24,7 @@ COMMON_REMOVE_CLASSES = [
     "navbar",
 ]
 COM_163_REMOVE_CLASSES = [
-    "post_((top)|(side)|(recommends)|(crumb)|(statement)|(next)|(jubao))",
+    "(post_)((top)|(side)|(recommends)|(crumb)|(statement)|(next)|(jubao))",
     "ntes-.*nav",
     "nav-bottom",
 ]
@@ -40,6 +40,13 @@ WIKIPEDIA_REMOVE_CLASSES = [
     "catlinks",
 ]
 DOC_PYTHON_REMOVE_CLASSES = ["headerlink"]
+AZURE_REMOVE_CLASSES = [
+    "visually-hidden",
+    "unsupported-browser",
+    "article-header-page-actions",
+    "feedback",
+    "ms--additional-resources",
+]
 
 # ===================================== #
 
@@ -49,5 +56,5 @@ REMOVE_CLASSES = [
     *COM_163_REMOVE_CLASSES,
     *WIKIPEDIA_REMOVE_CLASSES,
     *DOC_PYTHON_REMOVE_CLASSES,
+    *AZURE_REMOVE_CLASSES,
 ]
-# UNWRAP_TAGS = [*COMMON_UNWRAP_TAGS]
