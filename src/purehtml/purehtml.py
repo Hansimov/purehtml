@@ -41,7 +41,7 @@ class HTMLPurifier:
         keep_href: bool = False,
         keep_format_tags: bool = True,
         keep_group_tags: bool = True,
-        math_style: Literal["latex", "mathml"] = "latex",
+        math_style: Literal["latex", "html", "latex_with_style"] = "latex",
     ):
         self.verbose = verbose
         self.output_format = output_format
@@ -88,15 +88,33 @@ class HTMLPurifier:
             else:
                 ele.attrs = {}
 
-        if element.get("display") == "block":
+        display = element.get("display", "")
+
+        if display == "block":
             _unwrap_table(element)
             new_tag = BeautifulSoup("<div></div>", "html.parser").div
             new_tag["align"] = "center"
         else:
             new_tag = BeautifulSoup("<span></span>", "html.parser").span
-        new_tag["title"] = element.get("title", "")
-        element.attrs = {}
-        element.wrap(new_tag)
+
+        if self.math_style == "html":
+            new_tag["title"] = element.get("title", "")
+            element.attrs = {}
+            element.wrap(new_tag)
+        else:
+            latex_str = element.get("title", "")
+            if self.math_style == "latex":
+                latex_str = latex_str.replace("\\displaystyle", "")
+
+            if display == "block":
+                new_tag.string = f"\n$$ {latex_str} $$\n"
+            else:
+                new_tag.string = f" ${latex_str}$ "
+
+            if self.math_style == "latex_with_style":
+                element.replace_with(new_tag)
+            else:
+                element.replace_with(new_tag.string)
 
     def is_element_protected(self, element):
         return (element.name in PROTECT_TAGS) or any(
@@ -305,7 +323,7 @@ def purify_html_file(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["latex", "mathml"] = "latex",
+    math_style: Literal["html", "latex", "latex_with_style"] = "latex_with_style",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -325,7 +343,7 @@ def purify_html_str(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["latex", "mathml"] = "latex",
+    math_style: Literal["latex", "html"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -345,7 +363,7 @@ def purify_html_files(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["latex", "mathml"] = "latex",
+    math_style: Literal["latex", "html", "latex_with_style"] = "latex_with_style",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
