@@ -65,15 +65,31 @@ class HTMLPurifier:
                 "title": element.get("alttext", "") or element.get("title", ""),
             }
 
+        def _unwrap_table(element):
+            while (element.parent.name in ["td", "tr", "table"]) and len(
+                element.parent.contents
+            ) == 1:
+                element.parent.unwrap()
+
         if element.name == "math":
             element.attrs = _get_math_attrs(element)
+            _unwrap_table(element)
         for ele in element.find_all():
             if ele.name == "math":
                 ele.attrs = _get_math_attrs(ele)
-            elif ele.name not in MATH_TAGS:
+            elif (ele.name not in MATH_TAGS) and (not ele.find_all("math")):
                 ele.extract()
             else:
                 ele.attrs = {}
+
+        if element.get("display") == "block":
+            new_tag = BeautifulSoup("<div></div>", "html.parser").div
+            new_tag["align"] = "center"
+        else:
+            new_tag = BeautifulSoup("<span></span>", "html.parser").span
+        new_tag["title"] = element.get("title", "")
+        element.attrs = {}
+        element.wrap(new_tag)
 
     def is_element_protected(self, element):
         return (element.name in PROTECT_TAGS) or any(
