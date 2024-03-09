@@ -41,7 +41,7 @@ class HTMLPurifier:
         keep_href: bool = False,
         keep_format_tags: bool = True,
         keep_group_tags: bool = True,
-        math_style: Literal["latex", "html", "latex_with_style"] = "latex",
+        math_style: Literal["latex", "latex_in_tag", "html"] = "latex",
     ):
         self.verbose = verbose
         self.output_format = output_format
@@ -101,17 +101,16 @@ class HTMLPurifier:
             new_tag["title"] = element.get("title", "")
             element.attrs = {}
             element.wrap(new_tag)
-        else:
+        else:  # self.math_style == latex*
             latex_str = element.get("title", "")
-            if self.math_style == "latex":
-                latex_str = latex_str.replace("\\displaystyle", "")
+            latex_str = latex_str.replace("\\displaystyle", "")
 
             if display == "block":
                 new_tag.string = f"\n$$ {latex_str} $$\n"
             else:
                 new_tag.string = f" ${latex_str}$ "
 
-            if self.math_style == "latex_with_style":
+            if self.math_style == "latex_in_tag":
                 element.replace_with(new_tag)
             else:
                 element.replace_with(new_tag.string)
@@ -323,7 +322,7 @@ def purify_html_file(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["html", "latex", "latex_with_style"] = "latex_with_style",
+    math_style: Literal["latex", "latex_in_tag", "html"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -343,7 +342,7 @@ def purify_html_str(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["latex", "html"] = "latex",
+    math_style: Literal["latex", "latex_in_tag", "html"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -363,7 +362,7 @@ def purify_html_files(
     keep_href: bool = False,
     keep_format_tags: bool = True,
     keep_group_tags: bool = True,
-    math_style: Literal["latex", "html", "latex_with_style"] = "latex_with_style",
+    math_style: Literal["latex", "latex_in_tag", "html"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -387,7 +386,7 @@ if __name__ == "__main__":
         keep_href=False,
         keep_format_tags=True,
         keep_group_tags=True,
-        math_style="latex",
+        math_style="html",
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
