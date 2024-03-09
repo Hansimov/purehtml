@@ -26,17 +26,19 @@ except:
 class HTMLPurifier:
     def __init__(
         self,
-        verbose=False,
-        output_format="markdown",
-        keep_href=False,
-        keep_format_tags=False,
-        keep_group_tags=True,
+        verbose: bool = False,
+        output_format: Literal["markdown", "html"] = "html",
+        keep_href: bool = False,
+        keep_format_tags: bool = True,
+        keep_group_tags: bool = True,
+        math_style: Literal["latex", "mathml"] = "latex",
     ):
         self.verbose = verbose
         self.output_format = output_format
         self.keep_href = keep_href
         self.keep_format_tags = keep_format_tags
         self.keep_group_tags = keep_group_tags
+        self.math_style = math_style
 
     def html_to_markdown(self, html_str):
         markdown_str = markdownify(
@@ -228,8 +230,9 @@ def purify_html_file(
     verbose: bool = False,
     output_format: Literal["markdown", "html"] = "html",
     keep_href: bool = False,
-    keep_format_tags: bool = False,
+    keep_format_tags: bool = True,
     keep_group_tags: bool = True,
+    math_style: Literal["latex", "mathml"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -237,6 +240,7 @@ def purify_html_file(
         keep_href=keep_href,
         keep_format_tags=keep_format_tags,
         keep_group_tags=keep_group_tags,
+        math_style=math_style,
     )
     return purifier.purify_file(html_path)
 
@@ -246,8 +250,9 @@ def purify_html_str(
     verbose: bool = False,
     output_format: Literal["markdown", "html"] = "html",
     keep_href: bool = False,
-    keep_format_tags: bool = False,
+    keep_format_tags: bool = True,
     keep_group_tags: bool = True,
+    math_style: Literal["latex", "mathml"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -255,6 +260,7 @@ def purify_html_str(
         keep_href=keep_href,
         keep_format_tags=keep_format_tags,
         keep_group_tags=keep_group_tags,
+        math_style=math_style,
     )
     return purifier.purify_str(html_str)
 
@@ -264,8 +270,9 @@ def purify_html_files(
     verbose: bool = False,
     output_format: Literal["markdown", "html"] = "html",
     keep_href: bool = False,
-    keep_format_tags: bool = False,
+    keep_format_tags: bool = True,
     keep_group_tags: bool = True,
+    math_style: Literal["latex", "mathml"] = "latex",
 ):
     purifier = HTMLPurifier(
         verbose=verbose,
@@ -273,6 +280,7 @@ def purify_html_files(
         keep_href=keep_href,
         keep_format_tags=keep_format_tags,
         keep_group_tags=keep_group_tags,
+        math_style=math_style,
     )
     batch_purifier = BatchHTMLPurifier(purifier=purifier)
     return batch_purifier.purify_files(html_paths)
@@ -288,6 +296,7 @@ if __name__ == "__main__":
         keep_href=False,
         keep_format_tags=True,
         keep_group_tags=True,
+        math_style="latex",
     )
     for item in html_path_and_purified_content_list:
         html_path = item["path"]
