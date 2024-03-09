@@ -18,6 +18,7 @@ try:
         GROUP_TAGS,
         FORMAT_TAGS,
         PROTECT_TAGS,
+        MATH_TAGS,
     )
 except:
     # Run from package
@@ -28,6 +29,7 @@ except:
         GROUP_TAGS,
         FORMAT_TAGS,
         PROTECT_TAGS,
+        MATH_TAGS,
     )
 
 
@@ -57,7 +59,21 @@ class HTMLPurifier:
         return self.markdown_str
 
     def transform_math_element(self, element):
-        pass
+        def _get_math_attrs(element):
+            return {
+                "display": element.get("display", ""),
+                "title": element.get("alttext", "") or element.get("title", ""),
+            }
+
+        if element.name == "math":
+            element.attrs = _get_math_attrs(element)
+        for ele in element.find_all():
+            if ele.name == "math":
+                ele.attrs = _get_math_attrs(ele)
+            elif ele.name not in MATH_TAGS:
+                ele.extract()
+            else:
+                ele.attrs = {}
 
     def is_element_protected(self, element):
         return (element.name in PROTECT_TAGS) or any(
@@ -155,6 +171,13 @@ class HTMLPurifier:
 
         return str(soup)
 
+    def transform_protect_elements(self, html_str):
+        soup = BeautifulSoup(html_str, "html.parser")
+        for element in soup.find_all():
+            if element.name == "math":
+                self.transform_math_element(element)
+        return str(soup)
+
     def read_html_file(self, html_path):
         logger.note(f"> Purifying content in: {html_path}")
 
@@ -203,6 +226,7 @@ class HTMLPurifier:
 
         html_str = self.filter_elements(html_str)
         html_str = self.filter_attrs(html_str)
+        html_str = self.transform_protect_elements(html_str)
 
         if self.output_format == "markdown":
             markdown_str = self.html_to_markdown(html_str)
