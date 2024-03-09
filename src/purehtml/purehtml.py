@@ -11,7 +11,14 @@ from termcolor import colored
 
 try:
     # Run from script
-    from constants import REMOVE_TAGS, REMOVE_CLASSES, ENV_TAGS, GROUP_TAGS, FORMAT_TAGS
+    from constants import (
+        REMOVE_TAGS,
+        REMOVE_CLASSES,
+        ENV_TAGS,
+        GROUP_TAGS,
+        FORMAT_TAGS,
+        PROTECT_TAGS,
+    )
 except:
     # Run from package
     from .constants import (
@@ -20,6 +27,7 @@ except:
         ENV_TAGS,
         GROUP_TAGS,
         FORMAT_TAGS,
+        PROTECT_TAGS,
     )
 
 
@@ -48,6 +56,14 @@ class HTMLPurifier:
 
         return self.markdown_str
 
+    def transform_math_element(self, element):
+        pass
+
+    def is_element_protected(self, element):
+        return (element.name in PROTECT_TAGS) or any(
+            parent.name in PROTECT_TAGS for parent in element.parents
+        )
+
     def filter_elements(self, html_str):
         soup = BeautifulSoup(html_str, "html.parser")
 
@@ -73,13 +89,14 @@ class HTMLPurifier:
 
             class_id_str = f"{class_str} {id_str}"
 
-            is_class_in_remove_classes = any(
+            is_in_remove_classes = any(
                 re.search(remove_class, class_id_str, flags=re.IGNORECASE)
                 for remove_class in REMOVE_CLASSES
             )
-            is_element_in_remove_tags = element.name in REMOVE_TAGS
+            is_in_remove_tags = element.name in REMOVE_TAGS
+            is_in_protect_tags = self.is_element_protected(element)
 
-            if is_element_in_remove_tags or is_class_in_remove_classes:
+            if (not is_in_protect_tags) and (is_in_remove_tags or is_in_remove_classes):
                 element.extract()
                 removed_element_count += 1
 
@@ -91,7 +108,15 @@ class HTMLPurifier:
             KEEP_TAGS.extend(FORMAT_TAGS)
 
         for element in soup.find_all():
-            if element.name not in KEEP_TAGS:
+            if self.is_element_protected(element):
+                continue
+
+            is_in_keep_tags = element.name in KEEP_TAGS
+
+            if is_in_protect_tags:
+                continue
+
+            if not is_in_keep_tags:
                 element.unwrap()
                 unwrapped_element_count += 1
             elif not element.get_text().strip():
@@ -112,6 +137,8 @@ class HTMLPurifier:
     def filter_attrs(self, html_str):
         soup = BeautifulSoup(html_str, "html.parser")
         for element in soup.find_all():
+            if self.is_element_protected(element):
+                continue
             if element.name == "a":
                 if self.keep_href:
                     element.attrs = {"href": element.get("href")}
@@ -149,13 +176,13 @@ class HTMLPurifier:
             logger.warn(warn_msg)
             raise UnicodeDecodeError(warn_msg)
 
-    def purify_file(self, html_path, filter_elements=True, save=True, output_path=None):
+    def purify_file(self, html_path, save=True, output_path=None):
         logger.enter_quiet(not self.verbose)
         html_str = self.read_html_file(html_path)
         if not html_str:
             return {"path": html_path, "output_path": None, "output": ""}
         else:
-            result = self.purify_str(html_str, filter_elements=filter_elements)
+            result = self.purify_str(html_str)
         if save:
             if not output_path:
                 if self.output_format == "html":
@@ -169,19 +196,18 @@ class HTMLPurifier:
         logger.exit_quiet(not self.verbose)
         return {"path": html_path, "output_path": output_path, "output": result}
 
-    def purify_str(self, html_str, filter_elements=True):
+    def purify_str(self, html_str):
         logger.enter_quiet(not self.verbose)
         if not html_str:
             return ""
 
-        if filter_elements:
-            html_str = self.filter_elements(html_str)
+        html_str = self.filter_elements(html_str)
+        html_str = self.filter_attrs(html_str)
 
         if self.output_format == "markdown":
             markdown_str = self.html_to_markdown(html_str)
             result = markdown_str.strip()
         else:
-            html_str = self.filter_attrs(html_str)
             result = html_str.strip()
 
         logger.exit_quiet(not self.verbose)

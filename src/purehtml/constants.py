@@ -17,6 +17,9 @@ FONT_TAGS = ["b", "strong", "em"]
 MARK_TAGS = ["a", "i", "u", "s", "strike", "mark", "ins", "del", "cite", "blockquote"]
 FORMAT_TAGS = [*POS_TAGS, *FONT_TAGS, *MARK_TAGS]
 
+# protect tags (no preprocessing)
+PROTECT_TAGS = ["math"]
+
 COMMON_REMOVE_CLASSES = [
     "(?<!has)sidebar",
     "footer",
