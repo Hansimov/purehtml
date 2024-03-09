@@ -59,30 +59,37 @@ class HTMLPurifier:
         return self.markdown_str
 
     def transform_math_element(self, element):
-        def _get_math_attrs(element):
-            return {
-                "display": element.get("display", ""),
-                "title": element.get("alttext", "") or element.get("title", ""),
-            }
+        def _set_math_attrs(element):
+            if element.name == "math":
+                element.attrs = {
+                    "display": element.get("display", ""),
+                    "title": element.get("alttext", "") or element.get("title", ""),
+                }
 
         def _unwrap_table(element):
-            while (element.parent.name in ["td", "tr", "table"]) and len(
-                element.parent.contents
-            ) == 1:
-                element.parent.unwrap()
+            # in ar5iv, <math> with block display is wrapped in a table
+            if (
+                element.parent.name == "td"
+                and element.parent.parent.name == "tr"
+                and element.parent.parent.parent.name == "table"
+            ) and (
+                len(element.parent.parent.find_all("td")) == 1
+                and len(element.parent.parent.parent.find_all("tr")) == 1
+            ):
+                for i in range(3):
+                    element.parent.unwrap()
 
-        if element.name == "math":
-            element.attrs = _get_math_attrs(element)
-            _unwrap_table(element)
+        _set_math_attrs(element)
+
         for ele in element.find_all():
-            if ele.name == "math":
-                ele.attrs = _get_math_attrs(ele)
-            elif (ele.name not in MATH_TAGS) and (not ele.find_all("math")):
+            _set_math_attrs(ele)
+            if (ele.name not in MATH_TAGS) and (not ele.find_all("math")):
                 ele.extract()
             else:
                 ele.attrs = {}
 
         if element.get("display") == "block":
+            _unwrap_table(element)
             new_tag = BeautifulSoup("<div></div>", "html.parser").div
             new_tag["align"] = "center"
         else:

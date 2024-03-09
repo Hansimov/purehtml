@@ -21,7 +21,7 @@ FORMAT_TAGS = [*POS_TAGS, *FONT_TAGS, *MARK_TAGS]
 PROTECT_TAGS = ["math"]
 
 # https://developer.mozilla.org/en-US/docs/Web/MathML/Element
-MATH_TAGS = "maction menclose merror mfenced mfrac mi mmultiscripts mn mo mover mpadded mphantom mroot mrow ms mspace msqrt mstyle msub msubsup msup mtable mtd mtext mtr munder munderover semantics".split()
+MATH_TAGS = "math maction menclose merror mfenced mfrac mi mmultiscripts mn mo mover mpadded mphantom mroot mrow ms mspace msqrt mstyle msub msubsup msup mtable mtd mtext mtr munder munderover semantics".split()
 
 COMMON_REMOVE_CLASSES = [
     "(?<!has)sidebar",
