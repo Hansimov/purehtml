@@ -9,28 +9,15 @@ from markdownify import markdownify
 from tclogger import logger
 from termcolor import colored
 
-try:
-    # Run from script
-    from constants import (
-        REMOVE_TAGS,
-        REMOVE_CLASSES,
-        ENV_TAGS,
-        GROUP_TAGS,
-        FORMAT_TAGS,
-        PROTECT_TAGS,
-        MATH_TAGS,
-    )
-except:
-    # Run from package
-    from .constants import (
-        REMOVE_TAGS,
-        REMOVE_CLASSES,
-        ENV_TAGS,
-        GROUP_TAGS,
-        FORMAT_TAGS,
-        PROTECT_TAGS,
-        MATH_TAGS,
-    )
+from .constants import (
+    REMOVE_TAGS,
+    REMOVE_CLASSES,
+    ENV_TAGS,
+    GROUP_TAGS,
+    FORMAT_TAGS,
+    PROTECT_TAGS,
+    MATH_TAGS,
+)
 
 
 class HTMLPurifier:
