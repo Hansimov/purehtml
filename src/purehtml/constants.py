@@ -5,7 +5,7 @@ COMMON_REMOVE_TAGS = ["script", "style", "button", "link"]
 HEADER_TAGS = ["title", "h1", "h2", "h3", "h4", "h5", "h6"]
 LIST_TAGS = ["ul", "ol", "li", "dl", "dt", "dd"]
 TABLE_TAGS = ["table", "tr", "td", "th"]
-PARA_TAGS = ["p", "code", "pre", "code", "math"]
+PARA_TAGS = ["p", "pre", "code", "math"]
 ENV_TAGS = [*HEADER_TAGS, *LIST_TAGS, *TABLE_TAGS, *PARA_TAGS]
 
 # keep group tags (not unwrap)

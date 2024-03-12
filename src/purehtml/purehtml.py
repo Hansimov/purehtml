@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Union, Literal
 
 from bs4 import BeautifulSoup, Comment
-from markdownify import markdownify
 from tclogger import logger
 from termcolor import colored
 
@@ -18,6 +17,7 @@ from .constants import (
     PROTECT_TAGS,
     MATH_TAGS,
 )
+from .html2md import html2md
 
 
 class HTMLPurifier:
@@ -36,14 +36,6 @@ class HTMLPurifier:
         self.keep_format_tags = keep_format_tags
         self.keep_group_tags = keep_group_tags
         self.math_style = math_style
-
-    def html_to_markdown(self, html_str):
-        markdown_str = markdownify(
-            html_str, strip=["a"], wrap_width=120, heading_style="ATX"
-        )
-        self.markdown_str = re.sub(r"\n{3,}", "\n\n", markdown_str)
-
-        return self.markdown_str
 
     def transform_math_element(self, element):
         def _set_math_attrs(element):
@@ -238,7 +230,7 @@ class HTMLPurifier:
                 if self.output_format == "html":
                     output_path = Path(str(html_path) + ".pure")
                 else:
-                    output_path = Path(html_path.with_suffix(f".{self.output_format}"))
+                    output_path = Path(str(html_path) + ".md")
             output_path.parent.mkdir(parents=True, exist_ok=True)
             with open(output_path, "w", encoding="utf-8") as wf:
                 wf.write(result)
@@ -256,10 +248,9 @@ class HTMLPurifier:
         html_str = self.transform_protect_elements(html_str)
 
         if self.output_format == "markdown":
-            markdown_str = self.html_to_markdown(html_str)
-            result = markdown_str.strip()
-        else:
-            result = html_str.strip()
+            html_str = html2md(html_str)
+
+        result = html_str.strip()
 
         logger.exit_quiet(not self.verbose)
         return result
@@ -369,7 +360,7 @@ if __name__ == "__main__":
     html_path_and_purified_content_list = purify_html_files(
         html_paths,
         verbose=False,
-        output_format="html",
+        output_format="markdown",
         keep_href=False,
         keep_format_tags=True,
         keep_group_tags=True,
@@ -382,3 +373,5 @@ if __name__ == "__main__":
         # logger.line(purified_content)
         # logger.file(html_path)
         logger.file(output_path.name)
+
+    # python -m purehtml.purehtml
