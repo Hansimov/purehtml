@@ -66,8 +66,18 @@ def html2md(html_str):
                 element.unwrap()
             elif element.name in BEGIN_MARK_MAP:
                 mark = BEGIN_MARK_MAP[element.name]
-                element.insert_before(mark + " ")
-                element.unwrap()
+                new_string = str(element).strip()
+                replaced_map = {
+                    rf"^<{element.name}.*?>": "",
+                    rf"</{element.name}>$": "",
+                    "\n+": " ",
+                }
+                for pattern, replaced in replaced_map.items():
+                    new_string = re.sub(pattern, replaced, new_string)
+                new_string = new_string.strip()
+                new_string = f"{mark} {new_string}"
+                new_string = re.sub(rf"{mark}\s*•", f"{mark}", new_string)
+                element.replace_with(BeautifulSoup(new_string, "html.parser"))
             elif element.name in PAIRED_MARK_MAP:
                 mark = PAIRED_MARK_MAP[element.name]
                 element.insert_before(mark)
