@@ -10,7 +10,7 @@ from bs4 import BeautifulSoup
 UNWRAP_TAGS = ["html", "a"]
 
 GROUP_TAGS = ["div", "section", "p"]
-LIST_BEGIN_TAGS = ["ul", "ol"]
+LIST_TAGS = ["ul", "ol"]
 
 NEW_LINE_TAGS = ["table"]
 
@@ -21,7 +21,6 @@ BEGIN_MARK_MAP = {
     "h4": "####",
     "h5": "#####",
     "h6": "######",
-    "li": "-",
 }
 PAIRED_MARK_MAP = {
     "b": "**",
@@ -69,20 +68,33 @@ def html2md(html_str):
             element.unwrap()
         for element in soup.find_all(BEGIN_MARK_MAP.keys()):
             mark = BEGIN_MARK_MAP[element.name]
-            if element.name == "li":
-                if element.parent.name == "ol":
-                    mark = "1."
-                else:
-                    mark = "-"
             new_string = str(element).strip()
             new_string = unwrap_tag(new_string, element.name)
             new_string = re.sub("\n+", " ", new_string)
             new_string = new_string.strip()
             new_string = f"{mark} {new_string}"
-            new_string = re.sub(rf"{mark}\s*•", f"{mark}", new_string)
             new_element = BeautifulSoup(new_string, "html.parser")
             element.replace_with(new_element)
-        for element in soup.find_all(GROUP_TAGS + LIST_BEGIN_TAGS):
+        for element in soup.find_all(LIST_TAGS):
+            for idx, li in enumerate(element.find_all("li")):
+                if li.parent.name == "ol":
+                    mark = f"{idx+1}."
+                else:
+                    mark = "-"
+                new_string = str(li).strip()
+                new_string = unwrap_tag(new_string, li.name)
+                new_string = re.sub("\n+", " ", new_string)
+                new_string = new_string.strip()
+                indent_level = -1
+                for parent in li.parents:
+                    if parent.name in LIST_TAGS:
+                        indent_level += 1
+                indent_str = "  " * indent_level
+                new_string = f"{indent_str}{mark} {new_string}"
+                new_string = re.sub(rf"{mark}\s*•", f"{mark}", new_string)
+                new_li = BeautifulSoup(new_string, "html.parser")
+                li.replace_with(new_li)
+        for element in soup.find_all(GROUP_TAGS + LIST_TAGS):
             element.insert_before("\n")
             element.insert_after("\n")
             element.unwrap()
