@@ -39,9 +39,19 @@ PER_LINE_MARK_MAP = {
     "blockquote": ">",
 }
 
+ESCAPED_CHAR_MAP = {
+    "*": "\*",
+    "_": "\_",
+}
+
 
 def html2md(html_str):
+
+    for char, replaced in ESCAPED_CHAR_MAP.items():
+        html_str = html_str.replace(char, replaced)
+
     soup = BeautifulSoup(html_str, "html.parser")
+
     for element in soup.contents:
         if element.text.strip() == "":
             element.extract()
