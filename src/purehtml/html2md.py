@@ -66,6 +66,10 @@ def html2md(html_str):
                 element.extract()
         for element in soup.find_all(UNWRAP_TAGS):
             element.unwrap()
+        for element in soup.find_all(GROUP_TAGS):
+            element.insert_before("\n")
+            element.insert_after("\n")
+            element.unwrap()
         for element in soup.find_all(BEGIN_MARK_MAP.keys()):
             mark = BEGIN_MARK_MAP[element.name]
             new_string = str(element).strip()
@@ -94,7 +98,7 @@ def html2md(html_str):
                 new_string = re.sub(rf"{mark}\s*•", f"{mark}", new_string)
                 new_li = BeautifulSoup(new_string, "html.parser")
                 li.replace_with(new_li)
-        for element in soup.find_all(GROUP_TAGS + LIST_TAGS):
+        for element in soup.find_all(LIST_TAGS):
             element.insert_before("\n")
             element.insert_after("\n")
             element.unwrap()
