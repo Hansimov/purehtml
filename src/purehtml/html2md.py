@@ -14,6 +14,8 @@ LIST_TAGS = ["ul", "ol"]
 
 NEW_LINE_TAGS = ["table"]
 
+PROTECTED_TAGS = ["pre", "code"]
+
 BEGIN_MARK_MAP = {
     "h1": "#",
     "h2": "##",
@@ -39,7 +41,6 @@ ENV_MARK_MAP = {
 PER_LINE_MARK_MAP = {
     "blockquote": ">",
 }
-
 ESCAPED_CHAR_MAP = {
     "*": "\*",
     "_": "\_",
@@ -57,6 +58,24 @@ class HTMLToMarkdownConverter:
         for pattern in patterns:
             new_string = re.sub(pattern, "", new_string)
         return new_string
+
+    def convert_unwrap_element(self, element):
+        element.unwrap()
+
+    def convert_group_element(self, element):
+        element.insert_before("\n")
+        element.insert_after("\n")
+        element.unwrap()
+
+    def convert_begin_element(self, element):
+        mark = BEGIN_MARK_MAP[element.name]
+        new_string = str(element).strip()
+        new_string = self.unwrap_tag(new_string, element.name)
+        new_string = re.sub("\n+", " ", new_string)
+        new_string = new_string.strip()
+        new_string = f"{mark} {new_string}"
+        new_element = BeautifulSoup(new_string, "html.parser")
+        element.replace_with(new_element)
 
     def convert_li_element(self, li, level=-1, idx=0):
         if li.parent.name == "ol":
@@ -84,6 +103,27 @@ class HTMLToMarkdownConverter:
         element.insert_after("\n")
         element.unwrap()
 
+    def convert_paired_element(self, element):
+        mark = PAIRED_MARK_MAP[element.name]
+        element.insert_before(mark)
+        element.insert_after(mark)
+        element.unwrap()
+
+    def convert_per_line_element(self, element):
+        mark = PER_LINE_MARK_MAP[element.name]
+        new_string = str(element).strip()
+        new_string = self.unwrap_tag(new_string, element.name)
+        lines = new_string.split("\n")
+        marked_lines = [f"{mark} {line}" for line in lines]
+        new_string = "\n".join(marked_lines)
+        new_string = f"\n{new_string}\n"
+        new_element = BeautifulSoup(new_string, "html.parser")
+        element.replace_with(new_element)
+
+    def convert_new_line_element(self, element):
+        element.insert_before("\n")
+        element.insert_after("\n")
+
     def convert(self, html_str):
         for char, replaced in ESCAPED_CHAR_MAP.items():
             html_str = html_str.replace(char, replaced)
@@ -93,40 +133,19 @@ class HTMLToMarkdownConverter:
             if element.text.strip() == "":
                 element.extract()
         for element in soup.find_all(UNWRAP_TAGS):
-            element.unwrap()
+            self.convert_unwrap_element(element)
         for element in soup.find_all(GROUP_TAGS):
-            element.insert_before("\n")
-            element.insert_after("\n")
-            element.unwrap()
+            self.convert_group_element(element)
         for element in soup.find_all(BEGIN_MARK_MAP.keys()):
-            mark = BEGIN_MARK_MAP[element.name]
-            new_string = str(element).strip()
-            new_string = self.unwrap_tag(new_string, element.name)
-            new_string = re.sub("\n+", " ", new_string)
-            new_string = new_string.strip()
-            new_string = f"{mark} {new_string}"
-            new_element = BeautifulSoup(new_string, "html.parser")
-            element.replace_with(new_element)
+            self.convert_begin_element(element)
         for element in soup.find_all(LIST_TAGS):
             self.convert_list_element(element)
         for element in soup.find_all(PAIRED_MARK_MAP.keys()):
-            mark = PAIRED_MARK_MAP[element.name]
-            element.insert_before(mark)
-            element.insert_after(mark)
-            element.unwrap()
+            self.convert_paired_element(element)
         for element in soup.find_all(PER_LINE_MARK_MAP.keys()):
-            mark = PER_LINE_MARK_MAP[element.name]
-            new_string = str(element).strip()
-            new_string = self.unwrap_tag(new_string, element.name)
-            lines = new_string.split("\n")
-            marked_lines = [f"{mark} {line}" for line in lines]
-            new_string = "\n".join(marked_lines)
-            new_string = f"\n{new_string}\n"
-            new_element = BeautifulSoup(new_string, "html.parser")
-            element.replace_with(new_element)
+            self.convert_per_line_element(element)
         for element in soup.find_all(NEW_LINE_TAGS):
-            element.insert_before("\n")
-            element.insert_after("\n")
+            self.convert_new_line_element(element)
 
         md_str = str(soup)
         md_str = html.unescape(md_str)
