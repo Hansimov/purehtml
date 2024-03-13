@@ -51,6 +51,24 @@ class HTMLToMarkdownConverter:
     def __init__(self):
         pass
 
+    def is_in_protected_tag(self, element):
+        for element in element.parents:
+            if element.name in PROTECTED_TAGS:
+                return True
+        return False
+
+    def escape_html(self, html_str):
+        # TODO: Do not escape inside protected tags,
+        #   might call in element conversion functions
+        for char, replaced in ESCAPED_CHAR_MAP.items():
+            html_str = html_str.replace(char, replaced)
+        return html_str
+
+    def remove_empty_elements(self, soup):
+        for element in soup.contents:
+            if element.text.strip() == "":
+                element.extract()
+
     def unwrap_tag(self, html_str, tag):
         patterns = [rf"^<{tag}.*?>", rf"</{tag}>$"]
         new_string = html_str.strip()
@@ -124,14 +142,20 @@ class HTMLToMarkdownConverter:
         element.insert_before("\n")
         element.insert_after("\n")
 
-    def convert(self, html_str):
-        for char, replaced in ESCAPED_CHAR_MAP.items():
-            html_str = html_str.replace(char, replaced)
-        soup = BeautifulSoup(html_str, "html.parser")
+    def remove_extra_lines(self, s):
+        return re.sub(r"\n{3,}", "\n\n", s)
 
-        for element in soup.contents:
-            if element.text.strip() == "":
-                element.extract()
+    def soup2str(self, soup):
+        s = str(soup)
+        s = html.unescape(s)
+        s = self.remove_extra_lines(s)
+        return s
+
+    def convert(self, html_str):
+        html_str = self.escape_html(html_str)
+        soup = BeautifulSoup(html_str, "html.parser")
+        self.remove_empty_elements(soup)
+
         for element in soup.find_all(UNWRAP_TAGS):
             self.convert_unwrap_element(element)
         for element in soup.find_all(GROUP_TAGS):
@@ -147,9 +171,7 @@ class HTMLToMarkdownConverter:
         for element in soup.find_all(NEW_LINE_TAGS):
             self.convert_new_line_element(element)
 
-        md_str = str(soup)
-        md_str = html.unescape(md_str)
-        md_str = re.sub(r"\n{3,}", "\n\n", md_str)
+        md_str = self.soup2str(soup)
         return md_str
 
 
