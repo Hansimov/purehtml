@@ -33,7 +33,6 @@ PAIRED_MARK_MAP = {
     "strike": "~~",
     "s": "~~",
     "del": "~~",
-    "code": "`",
 }
 ENV_MARK_MAP = {
     "pre": "```",
@@ -57,6 +56,14 @@ class HTMLToMarkdownConverter:
                 return True
         return False
 
+    def check_protected_tag(func):
+        def wrapper(self, element, *args, **kwargs):
+            if self.is_in_protected_tag(element):
+                return
+            return func(self, element, *args, **kwargs)
+
+        return wrapper
+
     def escape_html(self, html_str):
         # TODO: Do not escape inside protected tags,
         #   might call in element conversion functions
@@ -77,14 +84,17 @@ class HTMLToMarkdownConverter:
             new_string = re.sub(pattern, "", new_string)
         return new_string
 
+    @check_protected_tag
     def convert_unwrap_element(self, element):
         element.unwrap()
 
+    @check_protected_tag
     def convert_group_element(self, element):
         element.insert_before("\n")
         element.insert_after("\n")
         element.unwrap()
 
+    @check_protected_tag
     def convert_begin_element(self, element):
         mark = BEGIN_MARK_MAP[element.name]
         new_string = str(element).strip()
@@ -110,6 +120,7 @@ class HTMLToMarkdownConverter:
         new_li = BeautifulSoup(new_string, "html.parser")
         return new_li
 
+    @check_protected_tag
     def convert_list_element(self, element, level=-1):
         level += 1
         for idx, li in enumerate(element.find_all("li")):
@@ -121,12 +132,14 @@ class HTMLToMarkdownConverter:
         element.insert_after("\n")
         element.unwrap()
 
+    @check_protected_tag
     def convert_paired_element(self, element):
         mark = PAIRED_MARK_MAP[element.name]
         element.insert_before(mark)
         element.insert_after(mark)
         element.unwrap()
 
+    @check_protected_tag
     def convert_per_line_element(self, element):
         mark = PER_LINE_MARK_MAP[element.name]
         new_string = str(element).strip()
@@ -138,6 +151,7 @@ class HTMLToMarkdownConverter:
         new_element = BeautifulSoup(new_string, "html.parser")
         element.replace_with(new_element)
 
+    @check_protected_tag
     def convert_new_line_element(self, element):
         element.insert_before("\n")
         element.insert_after("\n")
