@@ -356,7 +356,7 @@ def purify_html_files(
 
 if __name__ == "__main__":
     html_root = Path(__file__).parent / "samples"
-    html_paths = list(html_root.glob("*.html"))
+    html_paths = sorted(list(html_root.glob("*.html")), key=lambda x: x.name)
     html_path_and_purified_content_list = purify_html_files(
         html_paths,
         verbose=False,
