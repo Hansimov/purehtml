@@ -57,12 +57,13 @@ def html2md(html_str):
                 element.extract()
         for element in soup.find_all(UNWRAP_TAGS):
             element.unwrap()
-        for element in soup.find_all(GROUP_TAGS + LIST_BEGIN_TAGS):
-            element.insert_before("\n")
-            element.insert_after("\n")
-            element.unwrap()
         for element in soup.find_all(BEGIN_MARK_MAP.keys()):
             mark = BEGIN_MARK_MAP[element.name]
+            if element.name == "li":
+                if element.parent.name == "ol":
+                    mark = "1."
+                else:
+                    mark = "-"
             new_string = str(element).strip()
             replaced_map = {
                 rf"^<{element.name}.*?>": "",
@@ -75,6 +76,10 @@ def html2md(html_str):
             new_string = f"{mark} {new_string}"
             new_string = re.sub(rf"{mark}\s*•", f"{mark}", new_string)
             element.replace_with(BeautifulSoup(new_string, "html.parser"))
+        for element in soup.find_all(GROUP_TAGS + LIST_BEGIN_TAGS):
+            element.insert_before("\n")
+            element.insert_after("\n")
+            element.unwrap()
         for element in soup.find_all(PAIRED_MARK_MAP.keys()):
             mark = PAIRED_MARK_MAP[element.name]
             element.insert_before(mark)
