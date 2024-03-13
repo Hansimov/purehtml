@@ -1,6 +1,8 @@
 # PureHTML
 Purify HTML by filtering tags and classes
 
+![](https://img.shields.io/pypi/v/purehtml?label=purehtml&color=blue)
+
 ## Install
 
 ```sh
@@ -24,6 +26,15 @@ for item in html_path_and_purified_content_list:
 ```
 
 ## What params should I choose in different scenarios?
+
+### Functions
+```py
+purify_html_str  ( html_str  : str )
+
+purify_html_file ( html_path : Union[Path, str] )
+
+purify_html_files( html_paths: list[Union[Path, str]] )
+```
 
 ### Params
 Here are the params of `purify_html_files()`:
