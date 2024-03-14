@@ -1,6 +1,6 @@
 [project]
 name = "purehtml"
-version = "0.7.2"
+version = "0.7.3"
 authors = [
     { name="Hansimov" },
 ]
@@ -12,7 +12,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
 ]
-dependencies = [ "tclogger", "beautifulsoup4", "markdownify" ]
+dependencies = [ "tclogger", "beautifulsoup4" ]
 
 [project.urls]
 Homepage = "https://github.com/Hansimov/pure-html"
