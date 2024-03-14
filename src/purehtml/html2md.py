@@ -103,12 +103,16 @@ class HTMLToMarkdownConverter:
             element.string.replace_with(new_string)
 
     def escape_soup(self, soup):
-        for element in soup.find_all():
-            self.escape_element(element)
+        for element in soup.find_all(True):
+            if not self.is_related_tags(element, CODE_TAGS):
+                self.escape_element(element)
 
     def remove_empty_elements(self, soup):
         for element in soup.contents:
-            if element.text.strip() == "":
+            if (
+                not self.is_in_tags(element, CODE_TAGS + MATH_TAGS + TABLE_TAGS)
+                and element.text.strip() == ""
+            ):
                 element.extract()
 
     def unwrap_tag(self, html_str, tag):
