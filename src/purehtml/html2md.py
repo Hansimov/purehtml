@@ -176,15 +176,23 @@ class HTMLToMarkdownConverter:
                 element.string.insert_before("\n\n")
             return element
         else:
-            return None
+
+    def convert_dd_element(self, dd):
+        new_string = str(dd).strip()
+        for tag in ["<dt>", "<dd>"]:
+            new_string = new_string.replace(tag, f"{tag}\n\n")
+        for tag in ["</dt>", "</dd>"]:
+            new_string = re.sub(rf"\s*{tag}", f"{tag}", new_string)
+        new_dd = BeautifulSoup(new_string, "html.parser")
+        return new_dd
 
     @check_protected_tag
     def convert_def_element(self, element):
-        for dd in element.find_all(["dt", "dd"], recursive=False):
+        for dd in element.find_all(["dt", "dd"]):
             new_dd = self.convert_dd_element(dd)
-            if new_dd:
-                for child in new_dd.find_all(DEF_TAGS, recursive=False):
-                    self.convert_def_element(child)
+            for child in new_dd.find_all(DEF_TAGS, recursive=False):
+                self.convert_def_element(child)
+            dd.replace_with(new_dd)
 
     def remove_extra_lines(self, s):
         return re.sub(r"\n{3,}", "\n\n", s)
