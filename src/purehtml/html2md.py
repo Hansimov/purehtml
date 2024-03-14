@@ -67,12 +67,10 @@ class HTMLToMarkdownConverter:
             try:
                 if self.is_in_protected_tag(element):
                     return
-                if element.string:
-                    element.string = self.escape_html(element.string)
                 return func(self, element, *args, **kwargs)
             except Exception as e:
                 print(f"{e}:")
-                print(element)
+                print(element.name)
 
         return wrapper
 
@@ -80,6 +78,16 @@ class HTMLToMarkdownConverter:
         for char, replaced in ESCAPED_CHAR_MAP.items():
             html_str = html_str.replace(char, replaced)
         return html_str
+
+    def escape_element(self, element):
+        if element.string:
+            new_string = str(element.string)
+            new_string = self.escape_html(new_string)
+            element.string.replace_with(new_string)
+
+    def escape_soup(self, soup):
+        for element in soup.find_all():
+            self.escape_element(element)
 
     def remove_empty_elements(self, soup):
         for element in soup.contents:
@@ -218,6 +226,7 @@ class HTMLToMarkdownConverter:
     def convert(self, html_str):
         soup = BeautifulSoup(html_str, "html.parser")
         self.remove_empty_elements(soup)
+        self.escape_soup(soup)
 
         for element in soup.find_all(UNWRAP_TAGS):
             self.convert_unwrap_element(element)
