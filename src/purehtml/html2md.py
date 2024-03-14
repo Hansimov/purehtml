@@ -58,9 +58,15 @@ class HTMLToMarkdownConverter:
 
     def check_protected_tag(func):
         def wrapper(self, element, *args, **kwargs):
-            if self.is_in_protected_tag(element):
-                return
-            return func(self, element, *args, **kwargs)
+            try:
+                if self.is_in_protected_tag(element):
+                    return
+                if element.string:
+                    element.string = self.escape_html(element.string)
+                return func(self, element, *args, **kwargs)
+            except Exception as e:
+                print(e)
+                print(element)
 
         return wrapper
 
@@ -166,7 +172,6 @@ class HTMLToMarkdownConverter:
         return s
 
     def convert(self, html_str):
-        html_str = self.escape_html(html_str)
         soup = BeautifulSoup(html_str, "html.parser")
         self.remove_empty_elements(soup)
 
