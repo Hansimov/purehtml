@@ -17,6 +17,7 @@ TABLE_TAGS = ["table"]
 LIST_TAGS = ["ul", "ol"]
 DEF_TAGS = ["dl"]
 CODE_TAGS = ["pre", "code"]
+MATH_TAGS = ["math"]
 
 UNWRAP_TAGS = BODY_TAGS + LINK_TAGS
 NEW_LINE_TAGS = TABLE_TAGS
@@ -56,16 +57,32 @@ class HTMLToMarkdownConverter:
     def __init__(self):
         pass
 
-    def is_in_protected_tag(self, element):
+    def is_protected(self, element):
+        return self.is_in_tags(element, PROTECTED_TAGS)
+
+    def is_in_tags(self, element, tags):
+        if element.name in tags:
+            return True
         for element in element.parents:
-            if element.name in PROTECTED_TAGS:
+            if element.name in tags:
                 return True
         return False
+
+    def is_contain_tags(self, element, tags):
+        if element.name in tags:
+            return True
+        for element in element.descendants:
+            if element.name in tags:
+                return True
+        return False
+
+    def is_related_tags(self, element, tags):
+        return self.is_in_tags(element, tags) or self.is_contain_tags(element, tags)
 
     def check_protected_tag(func):
         def wrapper(self, element, *args, **kwargs):
             try:
-                if self.is_in_protected_tag(element):
+                if self.is_protected(element):
                     return
                 return func(self, element, *args, **kwargs)
             except Exception as e:
