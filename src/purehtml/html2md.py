@@ -144,9 +144,14 @@ class HTMLToMarkdownConverter:
     @check_protected_tag
     def convert_paired_element(self, element):
         mark = PAIRED_MARK_MAP[element.name]
-        element.insert_before(mark)
-        element.insert_after(mark)
-        element.unwrap()
+        new_string = str(element)
+        new_string = self.unwrap_tag(new_string, element.name)
+        leading_spaces = " " * (len(new_string) - len(new_string.lstrip()))
+        trailing_spaces = " " * (len(new_string) - len(new_string.rstrip()))
+        new_string = new_string.strip()
+        new_string = f"{leading_spaces}{mark}{new_string}{mark}{trailing_spaces}"
+        new_element = BeautifulSoup(new_string, "html.parser")
+        element.replace_with(new_element)
 
     @check_protected_tag
     def convert_per_line_element(self, element):
