@@ -170,12 +170,14 @@ class HTMLToMarkdownConverter:
         element.insert_before("\n")
         element.insert_after("\n")
 
-    def convert_dd_element(self, element):
-        if element:
-            if element.string:
-                element.string.insert_before("\n\n")
-            return element
+    def convert_code_element(self, element):
+        if element.parent.name == "pre":
+            element.unwrap()
         else:
+            mark = "`"
+            element.insert_before(mark)
+            element.insert_after(mark)
+            element.unwrap()
 
     def convert_dd_element(self, dd):
         new_string = str(dd).strip()
@@ -221,6 +223,8 @@ class HTMLToMarkdownConverter:
             self.convert_per_line_element(element)
         for element in soup.find_all(NEW_LINE_TAGS):
             self.convert_new_line_element(element)
+        for element in soup.find_all("code"):
+            self.convert_code_element(element)
         for element in soup.find_all(DEF_TAGS):
             self.convert_def_element(element)
 
