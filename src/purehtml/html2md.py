@@ -7,14 +7,17 @@ from bs4 import BeautifulSoup
 # - https://www.markdownguide.org/cheat-sheet
 # - https://www.markdownguide.org/basic-syntax
 
-UNWRAP_TAGS = ["html", "a"]
-
+BODY_TAGS = ["html", "body"]
+LINK_TAGS = ["a"]
 GROUP_TAGS = ["div", "section", "p"]
+TABLE_TAGS = ["table"]
 LIST_TAGS = ["ul", "ol"]
+DEF_TAGS = ["dl"]
+CODE_TAGS = ["pre", "code"]
 
-NEW_LINE_TAGS = ["table"]
-
-PROTECTED_TAGS = ["pre", "code"]
+UNWRAP_TAGS = BODY_TAGS + LINK_TAGS
+NEW_LINE_TAGS = TABLE_TAGS
+PROTECTED_TAGS = CODE_TAGS
 
 BEGIN_MARK_MAP = {
     "h1": "#",
@@ -65,7 +68,7 @@ class HTMLToMarkdownConverter:
                     element.string = self.escape_html(element.string)
                 return func(self, element, *args, **kwargs)
             except Exception as e:
-                print(e)
+                print(f"{e}:")
                 print(element)
 
         return wrapper
@@ -162,6 +165,22 @@ class HTMLToMarkdownConverter:
         element.insert_before("\n")
         element.insert_after("\n")
 
+    def convert_dd_element(self, element):
+        if element:
+            if element.string:
+                element.string.insert_before("\n\n")
+            return element
+        else:
+            return None
+
+    @check_protected_tag
+    def convert_def_element(self, element):
+        for dd in element.find_all(["dt", "dd"], recursive=False):
+            new_dd = self.convert_dd_element(dd)
+            if new_dd:
+                for child in new_dd.find_all(DEF_TAGS, recursive=False):
+                    self.convert_def_element(child)
+
     def remove_extra_lines(self, s):
         return re.sub(r"\n{3,}", "\n\n", s)
 
@@ -189,6 +208,8 @@ class HTMLToMarkdownConverter:
             self.convert_per_line_element(element)
         for element in soup.find_all(NEW_LINE_TAGS):
             self.convert_new_line_element(element)
+        for element in soup.find_all(DEF_TAGS):
+            self.convert_def_element(element)
 
         md_str = self.soup2str(soup)
         return md_str
