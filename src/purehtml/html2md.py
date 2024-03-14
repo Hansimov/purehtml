@@ -74,8 +74,6 @@ class HTMLToMarkdownConverter:
         return wrapper
 
     def escape_html(self, html_str):
-        # TODO: Do not escape inside protected tags,
-        #   might call in element conversion functions
         for char, replaced in ESCAPED_CHAR_MAP.items():
             html_str = html_str.replace(char, replaced)
         return html_str
@@ -179,6 +177,15 @@ class HTMLToMarkdownConverter:
             element.insert_after(mark)
             element.unwrap()
 
+    def convert_pre_element(self, element):
+        mark = "```"
+        new_string = str(element)
+        new_string = self.unwrap_tag(new_string, element.name)
+        new_string = new_string.strip()
+        new_string = f"\n{mark}\n{new_string}\n{mark}\n"
+        new_element = BeautifulSoup(new_string, "html.parser")
+        element.replace_with(new_element)
+
     def convert_dd_element(self, dd):
         new_string = str(dd).strip()
         for tag in ["<dt>", "<dd>"]:
@@ -225,6 +232,8 @@ class HTMLToMarkdownConverter:
             self.convert_new_line_element(element)
         for element in soup.find_all("code"):
             self.convert_code_element(element)
+        for element in soup.find_all("pre"):
+            self.convert_pre_element(element)
         for element in soup.find_all(DEF_TAGS):
             self.convert_def_element(element)
 
