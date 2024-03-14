@@ -1,7 +1,10 @@
 import html
 import re
+import warnings
 
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, MarkupResemblesLocatorWarning
+
+warnings.filterwarnings("ignore", category=MarkupResemblesLocatorWarning)
 
 # Markdown Cheat Sheet
 # - https://www.markdownguide.org/cheat-sheet
