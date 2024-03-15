@@ -223,7 +223,7 @@ class HTMLToMarkdownConverter:
         for tag in ["<dt>", "<dd>"]:
             new_string = new_string.replace(tag, f"{tag}\n\n")
         for tag in ["</dt>", "</dd>"]:
-            new_string = re.sub(rf"\s*{tag}", f"{tag}", new_string)
+            new_string = re.sub(rf"\s*{tag}", f"\n{tag}", new_string)
         new_dd = BeautifulSoup(new_string, "html.parser")
         return new_dd
 
